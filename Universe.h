@@ -1,25 +1,26 @@
 #include <string>
+#include <vector>
+
+using namespace std;
 
 #define DEAD '.'
 #define ALIVE '*'
-#define ROWS 20
-#define COLUMNS 20
 
 class Universe
 {
 private:
-    char array[ROWS][COLUMNS];
-    int steps;
-    int currentStep;
+    vector<vector<char>> array;
+    int currentStep, ROWS, COLUMNS;
 
-    int getInteger(std::string prompt);
-    void initialize();
+    int getInteger(string prompt);
+    void initializeRandom();
+    void initializeFromFile();
     void reset();
     int count_neighbors(int row, int column);
     char determineCell(int row, int column);
     void next_generation();
     void removeArray();
-    void display(bool init);
+    bool display(bool init);
 
 public:
     void run();

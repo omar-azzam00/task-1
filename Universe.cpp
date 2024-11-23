@@ -1,6 +1,7 @@
 #include <iostream>
 #include "Universe.h"
 #include <sstream>
+#include <fstream>
 
 using namespace std;
 
@@ -25,32 +26,120 @@ int Universe::getInteger(std::string prompt)
 
 void Universe::reset()
 {
-    fill_n(&array[0][0], ROWS * COLUMNS, DEAD);
+    array.resize(ROWS);
+    for (int i = 0; i < ROWS; i++)
+    {
+        array[i].resize(COLUMNS);
+        for (int j = 0; j < COLUMNS; j++)
+        {
+            array[i][j] = DEAD;
+        }
+    }
 }
 
 Universe::Universe()
 {
-    reset();
 }
 
 Universe::~Universe()
 {
 }
 
-void Universe::initialize()
+void Universe::initializeRandom()
 {
     int t = time(NULL);
     srand(t);
 
-    for (int i = ROWS / 2.5; i < ROWS / 2.5 + 4; i++)
+    for (int i = 0; i < ROWS; i++)
     {
-        for (int j = COLUMNS / 2.5; j < COLUMNS / 2.5 + 4; j++)
+        for (int j = 0; j < COLUMNS; j++)
         {
-            bool true_or_false = rand() >= (RAND_MAX / 2);
+            bool true_or_false = ((double)rand() / RAND_MAX) <= (1.0 / 3);
             array[i][j] = true_or_false ? ALIVE : DEAD;
         }
     }
 }
+
+void Universe::initializeFromFile()
+{
+    string line;
+    ifstream file;
+
+    while (true)
+    {
+        cout << "Enter the name of the file: ";
+        getline(cin, line);
+        file.open(line);
+
+        if (!file)
+        {
+            cout << "Error in opening file \"" << line << "\", try again" << endl;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    if (!getline(file, line))
+    {
+        cout << "Error in the format of the file!" << endl;
+        exit(1);
+    }
+
+    stringstream ss(line);
+
+    if (!(ss >> ROWS))
+    {
+        cout << "Error in the format of the file!" << endl;
+        exit(1);
+    };
+
+    if (!(ss >> COLUMNS))
+    {
+        cout << "Error in the format of the file!" << endl;
+        exit(1);
+    };
+
+    reset();
+
+    cout << COLUMNS << endl;
+    cout << ROWS << endl;
+
+    int i = 0;
+    while (getline(file, line))
+    {
+        if (line.length() != COLUMNS || i == array.size())
+        {
+            cout << "Error in the format of the file!" << endl;
+            exit(1);
+        }
+
+        for (int j = 0; j < COLUMNS; j++)
+        {
+            if (line[j] == '0')
+            {
+                array[i][j] = DEAD;
+            }
+            else if (line[j] == '1')
+            {
+                array[i][j] = ALIVE;
+            }
+            else
+            {
+                cout << "Error in the format of the file!" << endl;
+                exit(1);
+            }
+        }
+        i++;
+    }
+
+    if (i != ROWS)
+    {
+        cout << "Error in the format of the file!" << endl;
+        exit(1);
+    }
+};
 
 int Universe::count_neighbors(int row, int column)
 {
@@ -137,7 +226,7 @@ void Universe::next_generation()
     }
 }
 
-void Universe::display(bool init = false)
+bool Universe::display(bool init = false)
 {
     system("CLS");
 
@@ -153,17 +242,24 @@ void Universe::display(bool init = false)
 
     if (init)
     {
-        cout << "This is the start up universe." << endl;
-        cout << "PRESS ENTER TO CONTINUE";
+        cout << "THIS IS THE THE START UP UNIVERSE" << endl;
     }
     else
     {
-        cout << "Step " << currentStep << " from " << steps << " steps." << endl;
-        cout << "PRESS ENTER TO CONTINUE";
+        cout << "STEP " << currentStep << endl;
     }
 
+    cout << "WRITE Q TO EXIT OR ANY OTHER THING TO CONTINUE: ";
     string input;
     getline(cin, input);
+    if (input.length() == 1 && tolower(input[0]) == 'q')
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 }
 
 void Universe::run()
@@ -173,30 +269,72 @@ void Universe::run()
     reset();
 
     cout << "WELCOME TO GAME OF LIFE\n";
-    cout << "note that '.' means a dead cell while '*' means a live one.\n"
+    cout << "note that '" << DEAD << "' means a dead cell while '" << ALIVE << "' means a liv one.\n"
          << endl;
+
+    int choice;
 
     while (true)
     {
-        steps = getInteger("How many steps you want: ");
-        if (steps <= 0)
+        choice = getInteger("Do you want a (1)random pattern or (2)one from a file (1 or 2):  ");
+        if (choice < 1 || choice > 2)
         {
-            cout << "Steps must be bigger than 0." << endl;
+            cout << "Invalid, choice must be only 1 or 2." << endl;
         }
         else
         {
             break;
         }
     }
-    currentStep = 1;
+    currentStep = 0;
     cout << endl;
+    bool cont;
+    if (choice == 1)
+    {
+        while (true)
+        {
+            choice = getInteger("Do you want (1)20x20, (2)30x30 or (3)20x50: ");
+            if (choice == 1)
+            {
+                ROWS = 20;
+                COLUMNS = 20;
+                break;
+            }
+            else if (choice == 2)
+            {
+                ROWS = 30;
+                COLUMNS = 30;
+                break;
+            }
+            else if (choice == 3)
+            {
+                ROWS = 20;
+                COLUMNS = 50;
+                break;
+            }
+            else
+            {
+                cout << "Invalid, choice must be only 1, 2 or 3." << endl;
+            }
+        }
+        reset();
+        initializeRandom();
+        cont = display(true);
+    }
+    else
+    {
+        initializeFromFile();
+        cont = display(true);
+    }
 
-    initialize();
-    display(true);
-    while (currentStep <= steps)
+    if (!cont)
+    {
+        return;
+    }
+
+    do
     {
         next_generation();
-        display();
         currentStep++;
-    }
+    } while (display());
 }
