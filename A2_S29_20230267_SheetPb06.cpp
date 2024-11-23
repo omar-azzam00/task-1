@@ -5,13 +5,6 @@
 
 using namespace std;
 
-int main()
-{
-    Universe universe;
-
-    universe.run();
-}
-
 #define DEAD '.'
 #define ALIVE '*'
 
@@ -369,4 +362,11 @@ void Universe::run()
         next_generation();
         currentStep++;
     } while (display());
+}
+
+int main()
+{
+    Universe universe;
+
+    universe.run();
 }
