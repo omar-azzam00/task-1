@@ -1,3 +1,7 @@
+// Omar Mostafa Saad - 20230267 - S29
+// OOP A2 Task1.2 Problem 6
+// 2024 - 11 - 23
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
